@@ -1,0 +1,33 @@
+# A5 claims eval.
+#
+# Every quantitative sentence must resolve to a cell in results/. These cases
+# cover the three states a claim can be in and assert A5 classifies each one
+# correctly -- a mismatched claim in particular must be a blocker, because it
+# is what a stale re-run produces.
+name: a5_claims
+target: agents.a5_paper._resolve
+
+cases:
+  - id: resolves_exact_cell
+    results_csv: "exp,split,auc_mean\nbaseline_a,val,0.9512\nbaseline_b,test,0.6831\n"
+    column: auc_mean
+    selector: "exp=baseline_a;split=val"
+    expect_value: 0.9512
+
+  - id: resolves_with_single_selector
+    results_csv: "exp,gap\nbaseline_b,0.2681\n"
+    column: gap
+    selector: "exp=baseline_b"
+    expect_value: 0.2681
+
+  - id: unknown_column_is_unresolvable
+    results_csv: "exp,auc_mean\nbaseline_a,0.95\n"
+    column: not_a_column
+    selector: "exp=baseline_a"
+    expect_value: null
+
+  - id: selector_matching_nothing_is_unresolvable
+    results_csv: "exp,auc_mean\nbaseline_a,0.95\n"
+    column: auc_mean
+    selector: "exp=does_not_exist"
+    expect_value: null

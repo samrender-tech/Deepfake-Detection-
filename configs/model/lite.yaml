@@ -1,0 +1,6 @@
+# The CPU serving profile. EfficientNet-B0 at 224px, 16 frames.
+# Used when the deployment target has no GPU; reported separately so the
+# demo's latency is never confused with the paper's model.
+model: lite
+n_frames: 16
+image_size: 224

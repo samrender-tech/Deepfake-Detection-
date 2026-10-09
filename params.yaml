@@ -1,0 +1,7 @@
+# DVC parameters. Paths are machine-specific; override locally rather than
+# committing a change.
+data:
+  ffpp_root: ~/data/FaceForensics++
+  celebdf_root: ~/data/Celeb-DF-v2
+  dfdc_root: ~/data/dfdc
+  fakeavceleb_root: ~/data/FakeAVCeleb

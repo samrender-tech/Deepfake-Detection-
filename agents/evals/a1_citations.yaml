@@ -1,0 +1,39 @@
+# A1 citation eval. BLOCKING in CI.
+#
+# A hallucinated citation is the highest-cost failure in an academic
+# deliverable. A1 must reject any entry without a resolving identifier,
+# including ones that look entirely plausible.
+name: a1_citations
+blocking: true
+target: agents.a1_literature._verify
+
+cases:
+  - id: valid_arxiv
+    entry: {type: inproceedings, key: ok1, title: T, author: A, booktitle: B, year: "2022", eprint: "2204.08376"}
+    expect: accept
+
+  - id: valid_doi
+    entry: {type: article, key: ok2, title: T, author: A, journal: J, year: "2020", doi: "10.1109/CVPR.2020.00327"}
+    expect: accept
+
+  # Plausible-looking and completely unverifiable: exactly what a model
+  # invents when asked for "a paper about X".
+  - id: fabricated_no_identifier
+    entry: {type: inproceedings, key: fake1, title: "Generalizable Deepfake Detection via Cross-Modal Consistency", author: "Smith, J. and Doe, A.", booktitle: "Proc. CVPR", year: "2023"}
+    expect: reject
+    because: no DOI or arXiv id
+
+  - id: malformed_arxiv
+    entry: {type: misc, key: fake2, title: T, author: A, year: "2021", eprint: "arXiv-not-an-id"}
+    expect: reject
+    because: identifier does not match the arXiv pattern
+
+  - id: malformed_doi
+    entry: {type: article, key: fake3, title: T, author: A, journal: J, year: "2021", doi: "not/a/doi"}
+    expect: reject
+    because: identifier does not match the DOI pattern
+
+  - id: missing_required_fields
+    entry: {type: inproceedings, key: thin1, title: T, year: "2022", eprint: "2204.08376"}
+    expect: incomplete
+    because: missing author and booktitle

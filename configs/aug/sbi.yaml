@@ -1,0 +1,9 @@
+# Self-Blended Images. Converts REAL frames into fakes with a known
+# blend mask, so the model learns blending-boundary detection without ever
+# seeing a generator's fingerprint.
+aug:
+  enabled: true
+sbi:
+  enabled: true
+  p: 0.5
+lambda_mask: 0.3      # the boundary head's auxiliary loss

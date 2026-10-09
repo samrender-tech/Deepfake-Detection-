@@ -1,0 +1,177 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ddetect"
+version = "0.1.0"
+description = "AVFORGE - cross-dataset audio-visual deepfake detection"
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "MIT" }
+authors = [{ name = "Samrender Singh Saini" }]
+
+# Core deps: enough for the walking skeleton (Stage 1) on CPU/MPS.
+dependencies = [
+    # The three must be installed together from the same release. torchaudio
+    # and torchvision link against libtorch's C++ ABI, so a mismatched trio
+    # fails at import with a dlopen symbol error rather than at resolve time --
+    # and pip will happily produce one if torch is pinned for an unrelated
+    # reason (as the numpy<2 constraint below does).
+    "torch>=2.2,<2.3",
+    "torchvision>=0.17,<0.18",
+    "torchaudio>=2.2,<2.3",
+    "numpy>=1.26,<2.0",            # mediapipe pins numpy<2
+    "pandas>=2.1,<3.0",
+    "pyarrow>=15.0,<22.0",
+    "pydantic>=2.6",
+    "hydra-core>=1.3",
+    "omegaconf>=2.3",
+    "scikit-learn>=1.4",
+    "scipy>=1.11,<1.15",           # >=1.15 requires numpy>=2
+    "opencv-python-headless>=4.9,<5.0",  # cv5 dropped CascadeClassifier
+    "Pillow>=10.2",
+    "timm>=0.9.16",
+    "albumentations>=1.4",
+    "librosa>=0.10,<0.11",         # 1.0 requires numpy>=2.1
+    "soundfile>=0.12",
+    "tqdm>=4.66",
+    "rich>=13.7",
+    "matplotlib>=3.8",
+    "PyYAML>=6.0",            # agent eval suites
+]
+
+[project.optional-dependencies]
+# Face/landmark detection. Split out because wheels are the most fragile part
+# of the stack on Apple Silicon; the skeleton falls back to a Haar detector.
+face = [
+    "facenet-pytorch>=2.6",
+    "mediapipe>=0.10.14,<0.11",
+]
+audio = [
+    "transformers>=4.38",   # WavLM
+]
+serve = [
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.27",
+    "python-multipart>=0.0.9",
+    "sse-starlette>=2.0",
+    "arq>=0.25",
+    "redis>=5.0",
+    "sqlalchemy>=2.0",
+    "alembic>=1.13",
+    "psycopg[binary]>=3.1",
+    "boto3>=1.34",
+    "slowapi>=0.1.9",
+    "python-magic>=0.4.27",
+    "prometheus-client>=0.20",
+    "structlog>=24.1",
+]
+export = [
+    # Pinned below the NumPy 2 boundary: onnxruntime>=1.20 requires numpy>=2,
+    # which mediapipe forbids. See the pin note on the core dependencies.
+    "onnx>=1.15,<1.17",
+    "onnxruntime>=1.17,<1.20",
+]
+otel = [
+    "opentelemetry-sdk>=1.25",
+    "opentelemetry-exporter-otlp-proto-http>=1.25",
+    "opentelemetry-instrumentation-fastapi>=0.46b0",
+]
+track = [
+    "mlflow>=2.11",
+    "optuna>=3.6",
+    "dvc[s3]>=3.48",
+]
+dev = [
+    "pytest>=8.0",
+    "pytest-cov>=4.1",
+    "pytest-asyncio>=0.23",
+    "httpx>=0.27",
+    "ruff>=0.3",
+    "mypy>=1.9",
+    "pre-commit>=3.6",
+    "pip-audit>=2.7",
+    "types-requests",
+    "pandas-stubs",
+]
+
+[project.scripts]
+ddetect = "ddetect.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["ddetect*", "agents*", "api*", "experiments*"]
+
+# ---------------------------------------------------------------- ruff
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+exclude = ["web", "notebooks", ".venv", "runs", "data", "processed"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "SIM", "RUF", "ARG", "PTH"]
+ignore = [
+    "E501",    # line length is ruff-format's job
+    "B008",    # FastAPI Depends() in defaults is idiomatic
+    "N812",    # torch.nn.functional as F
+    "RUF001",  # we use typographic chars in docstrings deliberately
+    "N818",    # FirewallViolation / UploadRejected read better than ...Error
+]
+
+[tool.ruff.lint.per-file-ignores]
+"tests/*" = ["ARG", "B011", "C408", "N806"]
+# B, T, C, H, W for tensor dimensions is the universal convention in ML code;
+# lower-casing them would make every shape comment harder to follow.
+"ddetect/models/*" = ["N803", "N806"]
+"ddetect/data/*" = ["N806"]
+"ddetect/train.py" = ["N806"]
+"ddetect/metrics.py" = ["N806"]
+"ddetect/calibrate.py" = ["N806"]
+"ddetect/explain.py" = ["N806"]
+
+# ---------------------------------------------------------------- mypy
+[tool.mypy]
+python_version = "3.10"
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+no_implicit_optional = true
+ignore_missing_imports = true
+
+# Strict where it buys the most: the contracts every workstream codes against,
+# and the evaluation stack whose errors become wrong numbers in a paper.
+# The rest is checked but not required to be fully annotated -- claiming the
+# whole package is strictly typed when it is not would be worse than saying so.
+[[tool.mypy.overrides]]
+module = [
+    "ddetect.contracts",
+    "ddetect.metrics",
+    "ddetect.calibrate",
+    "ddetect.ood",
+    "ddetect.losses",
+    "ddetect.report",
+    "ddetect.stability",
+    "ddetect.utils.*",
+    "api.schemas",
+    "api.security",
+    "agents.core.*",
+]
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+warn_return_any = true
+
+# ---------------------------------------------------------------- pytest
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+markers = [
+    "slow: needs real data or a GPU; excluded from the default run",
+    "gpu: requires CUDA",
+    "net: requires network access",
+    "agent: calls an LLM; needs an API key",
+]
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.coverage.run]
+source = ["ddetect"]
+omit = ["*/syncnet.py", "*/__init__.py"]

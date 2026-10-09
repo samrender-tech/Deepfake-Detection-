@@ -1,0 +1,8 @@
+# The full generalisation stack: SBI + degradation.
+defaults:
+  - degrade
+  - _self_
+sbi:
+  enabled: true
+  p: 0.5
+lambda_mask: 0.3

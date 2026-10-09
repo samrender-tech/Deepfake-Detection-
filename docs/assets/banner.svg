@@ -1,0 +1,60 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="400" viewBox="0 0 1280 400" role="img" aria-labelledby="t d">
+  <title id="t">AVFORGE</title>
+  <desc id="d">Cross-dataset audio-visual deepfake detection</desc>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0b0b14"/>
+      <stop offset="1" stop-color="#171028"/>
+    </linearGradient>
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#a78bfa"/>
+      <stop offset="1" stop-color="#f472b6"/>
+    </linearGradient>
+    <radialGradient id="glow" cx="0.8" cy="0.35" r="0.55">
+      <stop offset="0" stop-color="#7c3aed" stop-opacity="0.35"/>
+      <stop offset="1" stop-color="#7c3aed" stop-opacity="0"/>
+    </radialGradient>
+    <pattern id="grid" width="32" height="32" patternUnits="userSpaceOnUse">
+      <path d="M32 0H0V32" fill="none" stroke="#ffffff" stroke-opacity="0.04"/>
+    </pattern>
+  </defs>
+
+  <rect width="1280" height="400" rx="20" fill="url(#bg)"/>
+  <rect width="1280" height="400" rx="20" fill="url(#grid)"/>
+  <rect width="1280" height="400" rx="20" fill="url(#glow)"/>
+
+  <!-- left: wordmark -->
+  <g font-family="-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif">
+    <text x="80" y="118" fill="#a78bfa" font-size="17" font-weight="600" letter-spacing="4">RESEARCH PROTOTYPE · DETECTOR, NOT A GENERATOR</text>
+    <text x="76" y="212" fill="#ffffff" font-size="96" font-weight="800" letter-spacing="-2">AVFORGE</text>
+    <rect x="82" y="236" width="120" height="5" rx="2.5" fill="url(#accent)"/>
+    <text x="80" y="290" fill="#e4e4e7" font-size="27" font-weight="500">Cross-dataset audio-visual deepfake detection</text>
+    <text x="80" y="328" fill="#a1a1aa" font-size="20">Calibrated · abstains when unsure · honest about unseen forgeries</text>
+  </g>
+
+  <!-- right: a face-crop frame, a per-frame score trace and a three-state verdict -->
+  <g transform="translate(860 70)">
+    <rect width="340" height="260" rx="16" fill="#ffffff" fill-opacity="0.04" stroke="#ffffff" stroke-opacity="0.12"/>
+    <!-- corner brackets: the face crop -->
+    <g stroke="#a78bfa" stroke-width="3" fill="none" stroke-linecap="round">
+      <path d="M118 40h-22v22"/><path d="M222 40h22v22"/>
+      <path d="M118 150h-22v-22"/><path d="M222 150h22v-22"/>
+    </g>
+    <ellipse cx="170" cy="95" rx="38" ry="46" fill="none" stroke="#e4e4e7" stroke-opacity="0.55" stroke-width="2"/>
+    <path d="M152 118q18 12 36 0" fill="none" stroke="#f472b6" stroke-width="2.5" stroke-linecap="round"/>
+    <!-- score trace with a flagged segment -->
+    <rect x="186" y="172" width="54" height="44" fill="#f43f5e" fill-opacity="0.18"/>
+    <line x1="30" y1="194" x2="310" y2="194" stroke="#71717a" stroke-dasharray="4 4"/>
+    <polyline fill="none" stroke="url(#accent)" stroke-width="3" stroke-linejoin="round" stroke-linecap="round"
+      points="30,206 62,203 94,208 126,200 158,204 190,186 214,176 238,184 262,205 294,207 310,204"/>
+    <!-- verdict chips -->
+    <g font-family="-apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif" font-size="13" font-weight="600">
+      <rect x="20" y="226" width="90" height="22" rx="11" fill="#22c55e" fill-opacity="0.18"/>
+      <text x="65" y="241" fill="#86efac" text-anchor="middle">authentic</text>
+      <rect x="118" y="226" width="104" height="22" rx="11" fill="#eab308" fill-opacity="0.2"/>
+      <text x="170" y="241" fill="#fde68a" text-anchor="middle">inconclusive</text>
+      <rect x="230" y="226" width="100" height="22" rx="11" fill="#ef4444" fill-opacity="0.2"/>
+      <text x="280" y="241" fill="#fca5a5" text-anchor="middle">manipulated</text>
+    </g>
+  </g>
+</svg>

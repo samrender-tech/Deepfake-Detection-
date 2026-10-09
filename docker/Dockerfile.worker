@@ -1,0 +1,43 @@
+# The analysis worker. Same code as the API, different entrypoint: inference is
+# CPU-bound and takes seconds, so it must not share a process with the event
+# loop serving health checks.
+
+FROM python:3.11-slim AS deps
+ENV PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1
+WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends build-essential git \
+    && rm -rf /var/lib/apt/lists/*
+COPY pyproject.toml README.md ./
+COPY ddetect/__init__.py ddetect/__init__.py
+RUN pip install --index-url https://download.pytorch.org/whl/cpu torch torchvision torchaudio \
+ && pip install ".[serve,face]"
+
+FROM python:3.11-slim AS runtime
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    NO_ALBUMENTATIONS_UPDATE=1 \
+    DDETECT_DEVICE=cpu \
+    DDETECT_ARTIFACT_DIR=/data/artifacts \
+    OMP_NUM_THREADS=2
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      ffmpeg libgl1 libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+RUN useradd --create-home --uid 10001 avforge
+WORKDIR /app
+COPY --from=deps /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=deps /usr/local/bin /usr/local/bin
+COPY --chown=avforge:avforge ddetect/ ./ddetect/
+COPY --chown=avforge:avforge api/ ./api/
+COPY --chown=avforge:avforge agents/ ./agents/
+COPY --chown=avforge:avforge pyproject.toml README.md ./
+
+RUN mkdir -p /data/artifacts /app/runs && chown -R avforge:avforge /data /app
+USER avforge
+
+# arq has no HTTP surface; liveness is "can the process import its own task".
+HEALTHCHECK --interval=60s --timeout=10s --start-period=120s --retries=3 \
+  CMD python -c "import api.worker" || exit 1
+
+CMD ["arq", "api.worker.WorkerSettings"]

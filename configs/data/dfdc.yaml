@@ -1,0 +1,13 @@
+# DFDC -- the only instantly-available dataset that carries audio, so it is the
+# training set for the audio-visual protocol.
+manifest: data/manifests/dfdc.parquet
+cache_root: processed
+n_frames: 32
+image_size: 299
+batch_size: 12           # lower: the audio and sync streams add activations
+num_workers: 4
+sampler: audio_stratified  # guarantees audio-bearing items in every batch
+use_audio: true
+use_sync: true
+audio_seconds: 4.0
+max_sync_windows: 6

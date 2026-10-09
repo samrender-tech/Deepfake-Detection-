@@ -1,0 +1,9 @@
+# @package _global_
+# Ablation: invariant risk minimisation (Arjovsky et al., 2019).
+# Costs a second backward pass; report the wall-clock alongside the result.
+defaults:
+  - finetune
+  - _self_
+irm: true
+irm_weight: 1.0
+domain_key: dataset

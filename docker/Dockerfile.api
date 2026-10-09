@@ -1,0 +1,60 @@
+# Multi-stage: build the frontend, then a slim runtime that serves both the
+# API and the built assets from one container.
+
+# ---------------------------------------------------------------- web
+FROM node:20-slim AS web
+WORKDIR /web
+COPY web/package*.json ./
+RUN npm ci
+COPY web/ ./
+RUN npm run build
+
+# ---------------------------------------------------------------- python deps
+FROM python:3.11-slim AS deps
+ENV PIP_NO_CACHE_DIR=1 PIP_DISABLE_PIP_VERSION_CHECK=1
+WORKDIR /app
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      build-essential git \
+    && rm -rf /var/lib/apt/lists/*
+COPY pyproject.toml README.md ./
+COPY ddetect/__init__.py ddetect/__init__.py
+# CPU-only torch: the serving profile runs on CPU, and the CUDA
+# wheels are ~2 GB that the image would carry for nothing.
+RUN pip install --index-url https://download.pytorch.org/whl/cpu \
+      torch torchvision torchaudio \
+ && pip install ".[serve,face]"
+
+# ---------------------------------------------------------------- runtime
+FROM python:3.11-slim AS runtime
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    NO_ALBUMENTATIONS_UPDATE=1 \
+    DDETECT_DEVICE=cpu \
+    DDETECT_UPLOAD_DIR=/data/uploads \
+    DDETECT_ARTIFACT_DIR=/data/artifacts
+
+# ffmpeg is required; libgl/libglib are OpenCV's runtime deps.
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      ffmpeg libgl1 libglib2.0-0 curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Non-root: this process parses hostile video with ffmpeg and OpenCV.
+RUN useradd --create-home --uid 10001 avforge
+WORKDIR /app
+
+COPY --from=deps /usr/local/lib/python3.11/site-packages /usr/local/lib/python3.11/site-packages
+COPY --from=deps /usr/local/bin /usr/local/bin
+COPY --chown=avforge:avforge ddetect/ ./ddetect/
+COPY --chown=avforge:avforge api/ ./api/
+COPY --chown=avforge:avforge agents/ ./agents/
+COPY --chown=avforge:avforge pyproject.toml README.md ./
+COPY --from=web --chown=avforge:avforge /web/dist ./web/dist
+
+RUN mkdir -p /data/uploads /data/artifacts /app/runs && chown -R avforge:avforge /data /app
+USER avforge
+
+EXPOSE 8000
+HEALTHCHECK --interval=30s --timeout=5s --start-period=90s --retries=3 \
+  CMD curl -fsS http://localhost:8000/healthz || exit 1
+
+CMD ["uvicorn", "api.main:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]

@@ -1,0 +1,10 @@
+# V-full: the visual generalisation stack.
+model:
+  visual:
+    backbone: effb4
+    pretrained: true
+    image_size: 299
+    use_freq: true          # SRM + DCT bands: compression-surviving artefacts
+    use_blend_head: true    # Face X-ray head, supervised by SBI masks
+    temporal: transformer
+    temporal_depth: 4

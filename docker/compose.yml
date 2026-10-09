@@ -1,0 +1,127 @@
+# Two ways to run this.
+#
+#   docker compose up                       API + worker + redis + postgres + minio
+#   docker compose --profile observability up   ... plus prometheus + grafana
+#
+# The API alone also works with no services at all (in-memory jobs, local blob
+# storage, in-process worker) -- that is the default when the DSNs are unset,
+# and it is what `make serve` uses.
+
+x-model-env: &model-env
+  DDETECT_RUN_DIR: /app/runs/full_system/seed0
+  DDETECT_DEVICE: cpu
+  DATABASE_URL: postgresql+psycopg://ddetect:${POSTGRES_PASSWORD:-ddetect}@postgres:5432/ddetect
+  REDIS_URL: redis://redis:6379/0
+  S3_ENDPOINT: http://minio:9000
+  S3_BUCKET: ddetect
+  S3_ACCESS_KEY: ${MINIO_USER:-minioadmin}
+  S3_SECRET_KEY: ${MINIO_PASSWORD:-minioadmin}
+  RETENTION_HOURS: "24"
+  LOG_LEVEL: INFO
+
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.api
+    ports: ["8000:8000"]
+    environment:
+      <<: *model-env
+      MAX_UPLOAD_MB: "100"
+      MAX_DURATION_S: "60"
+      RATE_LIMIT_ANALYSES: "10/minute"
+      CORS_ORIGINS: "http://localhost:8000,http://localhost:5173"
+      # API_KEYS: set this in production; unset means open.
+      # ANTHROPIC_API_KEY: optional; without it A7 uses its deterministic template.
+    volumes:
+      - ../runs:/app/runs:ro
+      - uploads:/data
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    restart: unless-stopped
+    mem_limit: 4g
+    pids_limit: 256
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
+
+  worker:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile.worker
+    environment:
+      <<: *model-env
+      WORKER_MAX_JOBS: "2"
+      JOB_TIMEOUT_S: "300"
+    volumes:
+      - ../runs:/app/runs:ro
+      - uploads:/data
+    depends_on:
+      postgres: {condition: service_healthy}
+      redis: {condition: service_healthy}
+    restart: unless-stopped
+    # Scale with `docker compose up --scale worker=3`. Inference is CPU-bound,
+    # so more processes beats more threads per process.
+    mem_limit: 4g
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
+
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ddetect
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ddetect}
+      POSTGRES_DB: ddetect
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ddetect"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:7-alpine
+    command: ["redis-server", "--save", "", "--appendonly", "no"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+    restart: unless-stopped
+
+  minio:
+    image: minio/minio:latest
+    command: server /data --console-address ":9001"
+    ports: ["9000:9000", "9001:9001"]
+    environment:
+      MINIO_ROOT_USER: ${MINIO_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_PASSWORD:-minioadmin}
+    volumes: [miniodata:/data]
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  prometheus:
+    profiles: ["observability"]
+    image: prom/prometheus:latest
+    ports: ["9090:9090"]
+    volumes: [./prometheus.yml:/etc/prometheus/prometheus.yml:ro]
+    restart: unless-stopped
+
+  grafana:
+    profiles: ["observability"]
+    image: grafana/grafana:latest
+    ports: ["3000:3000"]
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+    depends_on: [prometheus]
+    restart: unless-stopped
+
+volumes:
+  uploads:
+  pgdata:
+  miniodata:

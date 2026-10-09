@@ -1,0 +1,10 @@
+# @package _global_
+# E7 -- one checkpoint, all four test sets. Trained on FF++ + DFDC with the
+# modality mask handling the silent half.
+defaults:
+  - /data: combined
+  - /model: avforge
+  - /aug: degrade_sbi
+  - /train: swad
+exp: full_system
+eval_splits: [val]

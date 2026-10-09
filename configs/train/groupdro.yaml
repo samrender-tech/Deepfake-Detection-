@@ -1,0 +1,10 @@
+# @package _global_
+# Ablation: minimise the WORST forgery method's loss (Sagawa et al., ICLR 2020).
+# Hypothesis: average accuracy hides a method the model cannot see at all,
+# and the cross-dataset test IS a worst-group test.
+defaults:
+  - finetune
+  - _self_
+groupdro: true
+groupdro_eta: 0.01
+domain_key: forgery_method

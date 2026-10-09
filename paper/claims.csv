@@ -1,0 +1,8 @@
+section,claim_id,sentence_fragment,results_file,column,row_selector,expected_value,status
+abstract,gap_headline,cross-dataset AUC falls by X,results/cross_dataset_gap.csv,gap,exp=baseline_b,PENDING,unverified
+results,baseline_a_auc,in-dataset AUC of X on FF++ c23,results/by_experiment.csv,auc_mean,exp=baseline_a;split=val,PENDING,unverified
+results,baseline_b_auc,cross-dataset AUC of X,results/by_experiment.csv,auc_mean,exp=baseline_b,PENDING,unverified
+results,vfull_recovery,recovers X AUC over Baseline B,results/by_experiment.csv,auc_mean,exp=v_full,PENDING,unverified
+results,av_gain,audio-visual fusion adds X on FakeAVCeleb,results/by_experiment.csv,auc_mean,exp=av_proposed,PENDING,unverified
+results,abstention,selective risk of X at 80% coverage,results/by_experiment.csv,risk_at_80cov,exp=full_system,PENDING,unverified
+results,ood_auroc,novelty detection AUROC of X,results/ood_validation.csv,auroc,,PENDING,unverified

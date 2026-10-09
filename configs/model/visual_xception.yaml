@@ -1,0 +1,11 @@
+# Baseline A/B. A plain CNN on cropped face frames, mean pooled --
+# deliberately the architecture the literature reports, so E1 is a genuine
+# reproduction rather than a new model that happens to score well.
+model: baseline
+visual:
+  backbone: xception
+  pretrained: true
+  image_size: 299
+  temporal: mean
+  use_freq: false
+  use_blend_head: false

@@ -1,0 +1,11 @@
+# @package _global_
+# E5 -- the visual generalisation stack: degradation + SBI + frequency branch
+# + blending head + temporal transformer, with SWAD.
+# Success criterion: beats E2 cross-dataset with a non-overlapping bootstrap CI.
+defaults:
+  - /data: ffpp
+  - /model: visual_effb4
+  - /aug: degrade_sbi
+  - /train: swad
+exp: v_full
+eval_splits: [val]

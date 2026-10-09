@@ -1,0 +1,8 @@
+# Baseline A/B: no degradation. The honest reference point -- this is the
+# setting published FF++ numbers are reported at.
+aug:
+  enabled: false
+audio_aug:
+  enabled: false
+sbi:
+  enabled: false

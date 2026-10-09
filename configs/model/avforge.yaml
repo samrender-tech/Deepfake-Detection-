@@ -1,0 +1,21 @@
+# AV-proposed / full system.
+# modality_dropout is what lets ONE checkpoint serve silent FF++/Celeb-DF and
+# audio-bearing DFDC/FakeAVCeleb. Setting it to 0 is an ablation that must
+# fail loudly on silent video (the modality-dropout ablation).
+model:
+  visual:
+    backbone: effb4
+    pretrained: true
+    use_freq: true
+    use_blend_head: true
+    temporal: transformer
+  audio:
+    kind: logmel            # swap to wavlm with model/audio_wavlm_aasist
+  sync:
+    kind: contrastive       # trained on REAL video only
+    freeze: false
+  fusion:
+    mode: coattn
+    modality_dropout: 0.3
+    use_gate: true
+lambda_sync: 0.2            # the real-only AV contrastive loss

@@ -1,0 +1,10 @@
+# @package _global_
+# E6 -- Objective 3. Trains on DFDC (which has audio) and is evaluated on
+# FakeAVCeleb, because FF++ and Celeb-DF are silent.
+defaults:
+  - /data: dfdc
+  - /model: avforge
+  - /aug: degrade_sbi
+  - /train: swad
+exp: av_proposed
+eval_splits: [val]

@@ -1,0 +1,39 @@
+# Data and artefact versioning. Manifests, preprocessing caches and
+# checkpoints are too large for git and too important to lose, so DVC tracks
+# them with the remote on Drive or S3.
+#
+#   dvc remote add -d drive gdrive://<folder-id>
+#   dvc repro                 # rebuild whatever is stale
+#   dvc push                  # publish caches and checkpoints
+
+stages:
+  manifest_ffpp:
+    cmd: >-
+      python -m ddetect.data.build_manifest --dataset ffpp
+      --root ${data.ffpp_root} --out data/manifests/ffpp.parquet --audit
+    deps:
+      - ddetect/data/manifests/ffpp.py
+      - ddetect/data/manifest_io.py
+    outs:
+      - data/manifests/ffpp.parquet
+
+  preprocess_ffpp:
+    cmd: >-
+      python -m ddetect.data.run_preprocess
+      --manifest data/manifests/ffpp.parquet --cache-root processed
+      --workers 8 --phash-audit
+    deps:
+      - data/manifests/ffpp.parquet
+      - ddetect/data/preprocess.py
+      - ddetect/data/facedet.py
+    outs:
+      - processed/ffpp
+
+  # The leakage gate as a pipeline stage: it cannot be skipped on the way to
+  # training, because training depends on its output.
+  integrity_ffpp:
+    cmd: pytest -q tests/test_leakage.py
+    deps:
+      - data/manifests/ffpp.parquet
+      - ddetect/data/integrity.py
+    always_changed: false

@@ -1,0 +1,10 @@
+# @package _global_
+# Ablation: adversarial domain alignment (Ganin et al., JMLR 2016).
+# Hypothesis: a representation that cannot identify its source dataset cannot
+# be relying on that dataset's generator fingerprint.
+defaults:
+  - finetune
+  - _self_
+dann: true
+dann_weight: 0.1
+domain_key: dataset        # align across datasets, not forgery methods

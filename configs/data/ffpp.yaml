@@ -1,0 +1,14 @@
+# FaceForensics++ c23 -- the primary training set (protocol V).
+# AUDIO: none. FF++ videos are silent, which is why the audio-visual protocol
+# trains on DFDC instead.
+manifest: data/manifests/ffpp.parquet
+cache_root: processed
+n_frames: 32
+image_size: 299
+batch_size: 16
+num_workers: 4
+sampler: balanced        # real/fake AND per-forgery-method balance
+use_audio: false
+use_sync: false
+audio_seconds: 4.0
+max_sync_windows: 6

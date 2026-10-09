@@ -1,0 +1,15 @@
+# @package _global_
+# Ablation with a PREDICTED failure (the modality-dropout ablation): with modality dropout off,
+# the model learns to depend on audio and should collapse on silent video.
+# Demonstrating that failure is the point -- it proves the mask is what makes
+# one checkpoint work across both protocols.
+defaults:
+  - /data: combined
+  - /model: avforge
+  - /aug: degrade_sbi
+  - /train: swad
+exp: abl_no_modality_dropout
+model:
+  fusion:
+    modality_dropout: 0.0
+eval_splits: [val]

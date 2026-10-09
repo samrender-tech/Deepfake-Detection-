@@ -1,0 +1,14 @@
+# The standard schedule: 2 epochs frozen, then end-to-end.
+epochs: 15
+freeze_epochs: 2
+lr: 1.0e-4           # backbone
+head_lr: 1.0e-3      # randomly-initialised heads
+weight_decay: 1.0e-4
+warmup_epochs: 1.0
+grad_clip: 1.0
+focal_gamma: 2.0
+label_smoothing: 0.05
+ema_decay: 0.999
+use_ema: true
+patience: 5
+monitor: val_auc

@@ -1,0 +1,16 @@
+# @package _global_
+# E2 -- THE HEADLINE. Same model as E1, evaluated on datasets it never saw.
+# This measures the drop the literature rarely reports.
+#
+# Note the identical model/aug/train blocks: Baseline B is not a different
+# model, it is the same model and a different test set. Any difference beyond
+# that would confound the measurement.
+defaults:
+  - /data: ffpp
+  - /model: visual_xception
+  - /aug: none
+  - /train: finetune
+exp: baseline_b
+# Target sets are NOT listed here. They are evaluated once, by a human, via
+# `make eval-final` on a frozen config.
+eval_splits: [val]

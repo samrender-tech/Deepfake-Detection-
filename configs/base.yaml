@@ -1,0 +1,32 @@
+# Hydra root config. Compose an experiment with overrides:
+#   python -m ddetect.train --config-name base exp=baseline_b seed=1
+#
+# Every experiment in the grid is reachable by composition alone, so a
+# result is reproduced by naming its config rather than by remembering flags.
+
+defaults:
+  - data: ffpp
+  - model: visual_xception
+  - aug: none
+  - train: finetune
+  - _self_
+
+exp: baseline_a
+seed: 0
+run_root: runs
+
+# Evaluation splits written by the trainer.
+# NOTE: this is `val` only on purpose. Writing target-test
+# predictions on every run is how a cross-dataset number quietly stops being
+# honest -- someone starts watching it. Target tests are evaluated once per
+# frozen config through `make eval-final`.
+eval_splits: [val]
+
+calibration: temperature
+conformal_alpha: 0.1
+
+hydra:
+  run:
+    dir: ${run_root}/${exp}/seed${seed}
+  job:
+    chdir: false

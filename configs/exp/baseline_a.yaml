@@ -1,0 +1,11 @@
+# @package _global_
+# E1 -- reproduce the literature's in-dataset FF++ accuracy.
+# Target: video-level AUC >= 0.95 on c23. If it comes out HIGHER than published
+# numbers, suspect leakage before celebrating.
+defaults:
+  - /data: ffpp
+  - /model: visual_xception
+  - /aug: none
+  - /train: finetune
+exp: baseline_a
+eval_splits: [val]

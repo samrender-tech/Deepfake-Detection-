@@ -1,0 +1,19 @@
+# Objective 4: compression, blur and resolution augmentation.
+# Applied ONCE per clip (ClipAugmentor), not per frame: a real video has one
+# encode, and per-frame variation would make inter-frame quality a fingerprint
+# of our own pipeline.
+aug:
+  enabled: true
+  jpeg_p: 0.5
+  jpeg_quality: [30, 95]
+  blur_p: 0.3
+  downscale_p: 0.3
+  downscale_range: [0.25, 0.75]
+  noise_p: 0.2
+  cutout_p: 0.2
+audio_aug:
+  enabled: true
+  noise_p: 0.3
+  codec_p: 0.3
+sbi:
+  enabled: false

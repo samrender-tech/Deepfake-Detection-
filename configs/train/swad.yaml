@@ -1,0 +1,9 @@
+# SWAD (Cha et al., NeurIPS 2021): average every checkpoint past a start epoch.
+# Flat minima transfer across domains better, and the cross-dataset gap IS a
+# domain-shift gap -- reported as an ablation, not assumed.
+defaults:
+  - finetune
+  - _self_
+swad: true
+swad_start_epoch: 4
+use_ema: false       # SWAD replaces EMA; running both muddies the ablation

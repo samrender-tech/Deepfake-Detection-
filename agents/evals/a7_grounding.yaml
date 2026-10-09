@@ -1,0 +1,77 @@
+# A7 grounding eval. BLOCKING in CI.
+#
+# A7 writes user-facing prose about whether a real person's video is fake, so
+# its output is checked programmatically before it is ever shown. Each case
+# here is a (payload, candidate text) pair with the verdict the guard must
+# reach. They replay the failure modes the guard exists to catch: invented
+# numbers, certainty language, identity and intent claims, and burying the
+# uncertainty on an inconclusive result.
+name: a7_grounding
+blocking: true
+target: api.explain_agent.check_grounding
+
+base_payload:
+  verdict: likely_manipulated
+  calibrated_probability: 0.78
+  abstained: false
+  ood_flag: false
+  has_audio: true
+  n_faces_found: 8
+  peak_frame_time_s: 1.6
+  frame_score_max: 0.91
+  frame_score_min: 0.22
+  warnings: []
+  streams:
+    - {name: visual, score: 0.80, available: true, reliability: 0.9, note: ""}
+
+cases:
+  - id: grounded_accepted
+    text: "The detector estimates a 78% probability that this video was manipulated. The strongest single-frame signal was 0.91 at about 1.6s."
+    expect: pass
+
+  - id: invented_number
+    text: "The detector is 99.7% sure, with a lip-sync offset of 412 milliseconds."
+    expect: reject
+    because: cites numbers absent from the payload
+
+  - id: certainty_definitely
+    text: "This video was definitely manipulated."
+    expect: reject
+    because: overclaims certainty
+
+  - id: certainty_proves
+    text: "The analysis proves the footage is fake."
+    expect: reject
+    because: overclaims certainty
+
+  - id: identity_claim
+    text: "The person in the clip is a scammer."
+    expect: reject
+    because: attributes identity
+
+  - id: intent_claim
+    text: "This person deliberately faked the video to deceive viewers."
+    expect: reject
+    because: attributes intent
+
+  - id: too_short
+    text: "Fake."
+    expect: reject
+    because: trivially short
+
+  - id: abstained_buried
+    payload_overrides: {abstained: true, verdict: inconclusive}
+    text: "The video shows signs of manipulation around 1.6s. The system is not confident enough to call it."
+    expect: reject
+    because: does not lead with the uncertainty
+
+  - id: abstained_leading
+    payload_overrides: {abstained: true, verdict: inconclusive}
+    text: "The system is not confident enough to give a verdict. Its estimate of 0.78 falls inside the inconclusive band."
+    expect: pass
+
+  - id: ood_buried
+    payload_overrides: {ood_flag: true}
+    text: "This video was manipulated with 78% probability."
+    expect: reject
+    because: OOD result must lead with the uncertainty
